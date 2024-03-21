@@ -1,0 +1,93 @@
+import React, { useState } from 'react'
+import { Page, Text, Image, Document, StyleSheet, Font } from "@react-pdf/renderer";
+import {  url } from '../../constants/Constants';
+import MyCustomFont from '../../fonts/Anton-Regular.ttf';
+
+Font.register({
+    family: 'AntonFamily',
+    src: MyCustomFont
+  })
+
+
+const styles = StyleSheet.create({
+    body: {
+        paddingTop: 35,
+        paddingBottom: 65,
+        paddingHorizontal: 35,
+    },
+    title: {
+        fontSize: 24,
+        textAlign: "center",
+        fontFamily: "AntonFamily",
+    },
+    text: {
+        margin: 12,
+        fontSize: 14,
+        textAlign: "justify",
+        fontFamily: "AntonFamily",
+
+    },
+    image: {
+        marginVertical: 15,
+        marginHorizontal: 100,
+    },
+    header: {
+        fontSize: 12,
+        marginBottom: 20,
+        textAlign: "center",
+        color: "grey",
+        fontFamily: "AntonFamily",
+    },
+    pageNumber: {
+        position: "absolute",
+        fontSize: 12,
+        bottom: 30,
+        left: 0,
+        right: 0,
+        textAlign: "center",
+        color: "grey",
+        fontFamily: "AntonFamily",
+    },
+
+})
+
+
+
+
+const PdfFile = (book) => {
+    return (
+        <>
+            <Document>
+                    <Page style={styles.body}>
+                        <Text style={styles.header} >{book.book.title}</Text>
+                        <Text style={styles.header} fixed>{book.book.author.name}</Text>
+                        <Text style={styles.header} fixed>{book.book.genre}</Text>
+                        {book.book.photo && (
+                            <Image style={styles.image} src={url + book.book.photo} />
+                        )}
+                        <Text style={styles.text}>
+                            So how did the classical Latin become so incoherent? According to McClintock, a 15th century typesetter likely scrambled part of Cicero's De Finibus in order to provide placeholder text to mockup various fonts for a type specimen book.
+
+                            It's difficult to find examples of lorem ipsum in use before Letraset made it popular as a dummy text in the 1960s, although McClintock says he remembers coming across the lorem ipsum passage in a book of old metal type samples. So far he hasn't relocated where he once saw the passage, but the popularity of Cicero in the 15th century supports the theory that the filler text has been used for centuries.
+
+                            And anyways, as Cecil Adams reasoned, “[Do you really] think graphic arts supply houses were hiring classics scholars in the 1960s?” Perhaps. But it seems reasonable to imagine that there was a version in use far before the age of Letraset.
+
+                            McClintock wrote to Before & After to explain his discovery;
+
+                            “What I find remarkable is that this text has been the industry's standard dummy text ever since some printer in the 1500s took a galley of type and scrambled it to make a type specimen book; it has survived not only four centuries of letter-by-letter resetting but even the leap into electronic typesetting, essentially unchanged except for an occasional 'ing' or 'y' thrown in. It's ironic that when the then-understood Latin was scrambled, it became as incomprehensible as Greek; the phrase 'it's Greek to me' and 'greeking' have common semantic roots!” (The editors published his letter in a correction headlined “Lorem Oopsum”).
+                            As an alternative theory, (and because Latin scholars do this sort of thing) someone tracked down a 1914 Latin edition of De Finibus which challenges McClintock's 15th century claims and suggests that the dawn of lorem ipsum was as recent as the 20th century. The 1914 Loeb Classical Library Edition ran out of room on page 34 for the Latin phrase “dolorem ipsum” (sorrow in itself). Thus, the truncated phrase leaves one page dangling with “do-”, while another begins with the now ubiquitous “lorem ipsum”.
+
+                            Whether a medieval typesetter chose to garble a well-known (but non-Biblical—that would have been sacrilegious) text, or whether a quirk in the 1914 Loeb Edition inspired a graphic designer, it's admittedly an odd way for Cicero to sail into the 21st century.
+                        </Text>
+                        <Text
+                            style={styles.pageNumber}
+                            render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`}
+                            fixed
+                        />
+                    </Page>
+            </Document>
+        </>
+    )
+}
+
+export default PdfFile
