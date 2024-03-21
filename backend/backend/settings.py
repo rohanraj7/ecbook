@@ -16,6 +16,7 @@ from pathlib import Path
 from decouple import config
 
 import os
+import django_heroku
 
 
 
@@ -32,7 +33,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["ecbook.herokuapp.com"]
 
 
 # Application definition
@@ -141,11 +142,12 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config('DB_NAME'),
-        "USER": config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "da38pt3pdq1r07",
+        "USER": "udgsrobu5mqr41",
+        'PASSWORD': "p089cea6d4feafc1356f146eefa44d66f9b79a53df561c4b08e30493802ba287c",
+        'HOST': "cb889jp6h2eccm.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com",
+        'PORT': "5432"
     }
 }
 
@@ -184,8 +186,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
+STATIC_ROOT = os.path.join(BASE_DIR,'staticfiles')
 STATIC_URL = "static/"
-STATIC_ROOT = os.path.join(BASE_DIR,'static')
+django_heruko.setings(local())
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
