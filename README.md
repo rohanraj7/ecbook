@@ -1,74 +1,261 @@
+# Tutorial: Django + Postgres + Heroku Deployment
 
-# Getting Started with Create React App
+In this tutorial, you will learn how to deploy a Django API to Heroku. Here’s what you need to do to go from zero to deployed on Heroku with a Django + Postgres application from the command line.
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+[watch the full video](https://youtu.be/Nhl_-1gvQTk)
 
-## Available Scripts
+## step 01: requirements
+```
+pip install whitenoise
+pip install gunicorn
+pip install dj-database-url
+pip install django-cors-headers
+pip install psycopg2
+```
+Create two files in the project root.
+```
+touch Procfile
+runtime.txt
+```
+Here is my current directory structure
+```
+.
+├── Procfile
+├── apps
+├── manage.py
+├── myproject
+├── requirements.txt
+└── runtime.txt
+```
+Let's freeze the requirements.txt file
+```
+pip freeze -> requirements.txt
+```
+You should see something like this:
+```
+asgiref==version
+dj-database-url==version
+Django==version
+django-cors-headers==version
+django-heroku==version
+djangorestframework==version
+gunicorn==version
+psycopg2==version
+pytz==version
+sqlparse==version
+whitenoise==version
+```
 
-In the project directory, you can run:
+## step 02: static assets management and serving
+By default, Django does not serve static files in production. Hence, we will use WhiteNoise for serving static assets in production. So let's configure the STATIC-related parameters in ```settings.py```, make sure to put these configurations are at the end of ```settings.py```
+```python
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+STATIC_URL = '/static/'
+# Extra places for collectstatic to find static files.
+STATICFILES_DIRS = (
+    os.path.join(PROJECT_ROOT, 'static'),
+)
+```
+If you’re familiar with Django you’ll know what to do. If you’re just getting started with a new Django project then you’ll need add the following to the bottom of your ```settings.py``` file:
+```python
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+```
 
-### `npm start`
+## step 03: enable whitenoise
+Edit your ```settings.py``` file and add WhiteNoise to the ```MIDDLEWARE``` list. The WhiteNoise middleware should be placed directly after the Django SecurityMiddleware (if you are using it) and before all other middleware:
+```python
+MIDDLEWARE = [
+  'django.middleware.security.SecurityMiddleware',
+  'whitenoise.middleware.WhiteNoiseMiddleware',
+  # ...
+]
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## step 04: edit Heroku required files
+Edit the ```Procfile``` file in the project root with the following content
+```
+web: gunicorn <project_name>.wsgi --log-file -
+```
+Edit the ```runtime.txt``` file in the project root with the following content, For example, I'll be using Python 3.6.8
+```
+python-3.6.8
+```
+If you like more information about Heroku supported runtime enviroments please visit: https://devcenter.heroku.com/articles/python-support#supported-runtimes
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
 
-### `npm test`
+## step 05: database configuration
+We use the ```dj-database-url``` library to extract database configurations from the environment.
+For Django applications, a Heroku Postgres hobby-dev database is automatically provisioned. This populates the ```DATABASE_URL``` environment variable.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+To set up the database, we will add the following code in ```settings.py```:
+```python
+import os
+import dj_database_url
+```
+After the databases setting add the following 
+```python
+DATABASES = {
+    'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'sample123',
+            'USER': 'suresh',
+            'PASSWORD': '',
+            'HOST': 'localhost',
+            'PORT': '',
+        }
+}
+# dj-database-url settings
+# Update database configuration with $DATABASE_URL.
+db_from_env = dj_database_url.config()
+DATABASES['default'].update(db_from_env)
+```
 
-### `npm run build`
+## step 06: deployment settings and cors headers
+Alright, enough configuration. Let’s get the deployment started. First, let's initialize our gitrepo in the In your project root
+```
+git init
+```
+Take a look at what files are ready to be committed to ```git```
+```
+git status
+```
+Some of these files we don’t want to track in git. Why? Well, some of them can be created each time you run the program, so it is a waste of space and distracting to check them into git. To handle this, we create a file called .gitignore (like git ignore, but all one word) in the base directory of our project. Then, we write the file or folder names or paths that we want to exclude from git.
+```
+git add .
+git commit -m "Initial commit"
+touch .gitignore
+```
+add the following to the ```.gitignore``` file
+```
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+# C extensions
+*.so
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# Django stuff:
+*.log
+local_settings.py
 
-### `npm run eject`
+# pyenv
+.python-version
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+# dotenv
+.env
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+# virtualenv
+.venv
+venv/
+ENV/
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+# mypy
+.mypy_cache/
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+# vscode
+.vscode/
+```
 
-## Learn More
+Now let's add the django cors header to the installed apps
+```python
+INSTALLED_APPS = [
+    ...,
+    'django.contrib.staticfiles',
+    'corsheaders',
+    ...
+]
+```
+You will also need to add a middleware class to listen in on responses:
+```python
+MIDDLEWARE = [  # Or MIDDLEWARE_CLASSES on Django < 1.10
+    ...
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    ...
+]
+```
+Add ```CORS_ORIGIN_ALLOW_ALL``` before the ```ROOT_URLCONF```
+```python
+CORS_ORIGIN_ALLOW_ALL = True
+ROOT_URLCONF = 'myproject.urls'
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## step 07: sign up on Heroku and install the Heroku Toolbeit
+Heroku actually uses a cli to control their deployments. So let’s install it.
+```
+brew install heroku
+```
+Now, we need to “log in” to the local cli. This command will ask for your credentials. When you type in your password, you won’t see it, but it is working. Press enter when you are done.
 
-### Code Splitting
+```
+heroku login
+heroku create <app_name>
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Now let's setup the databases. The following commands create postgresql database on heroku for you app and fetch its url.
+```
+heroku addons:create heroku-postgresql:hobby-dev
+heroku config -s | grep DATABASE_URL
+```
 
-### Analyzing the Bundle Size
+## step 08: building the app locally
+Run the following command to test Heroku deployment locally. Make sure you're the root of the project.
+```
+heroku local web
+```
+This will run the Procfile and consequently you can debug any errors if any on your local machine. You should see an output similar to this.
+```
+4:30:46 PM web.1 |  [2020-05-12 16:30:46 -0400] [4314] [INFO] Starting gunicorn 20.0.4
+4:30:47 PM web.1 |  [2020-05-12 16:30:46 -0400] [4314] [INFO] Listening at: http://0.0.0.0:5000 (4314)
+4:30:47 PM web.1 |  [2020-05-12 16:30:46 -0400] [4314] [INFO] Using worker: sync
+4:30:47 PM web.1 |  [2020-05-12 16:30:46 -0400] [4317] [INFO] Booting worker with pid: 4317
+```
+Now visit http://0.0.0.0:5000 and see if you can see the Django application.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## step 09: db migration, commit and collect static
+Let's run the db migrations
+```
+heroku run python manage.py migrate
+heroku run python manage.py makemigrations
+```
+```
+heroku run python manage.py createsuperuser
+```
+```
+heroku run python manage.py migrate
+```
+Sometimes, you may not want Heroku to run collectstatic on your behalf. You can disable the collectstatic build step with the ```DISABLE_COLLECTSTATIC``` configuration:
+```
+heroku config:set DISABLE_COLLECTSTATIC=1
+```
+## step 10:
+Finally, we are now ready to deploy our application. Follow these steps to successfully deploy to Heroku.
+Commit all changes to git.
+```
+git add .
+git commit -m "deployment ready"
+git push heroku master
+heroku open
+```
 
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-=======
-# ecbook1
->>>>>>> 58391f1bbdbb13859269145e4723b61fd88ce6c8
